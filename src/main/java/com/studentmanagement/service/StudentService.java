@@ -2,44 +2,56 @@ package com.studentmanagement.service;
 
 import com.studentmanagement.model.Student;
 
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 
 public class StudentService {
 
     private static long counter = 0;
-    HashMap<Long, Student> studentHashMap = new HashMap<>();
+    HashMap<String, Student> studentHashMap = new HashMap<>();
 
-    private long generateId(){
-        counter ++;
-        return counter;
+    private boolean isStudentExistInDb(String email){
+
+        if (studentHashMap.containsKey(email)){
+            return true;
+        }
+        return false;
     }
 
     public String createStudent(Student student){
-        Long id = generateId();
-        studentHashMap.put(id, student);
+        if (isStudentExistInDb(student.getEmail())){
+            return "Duplicate Student";
+        }
+        studentHashMap.put(student.getEmail(), student);
         return "Student created succesfully";
     }
 
-    public Student getStudent(Long id){
-        if (!studentHashMap.containsKey(id)){
+    public Student getStudent(String email){
+        if (!isStudentExistInDb(email)){
             return new Student();
         }
-        return studentHashMap.get(id);
+        return studentHashMap.get(email);
     }
 
-    public String updateStudent(Long id, Student student){
-        if (!studentHashMap.containsKey(id)){
-            return "Student with given id: " + id + " does not exist in the db";
-        }
-        studentHashMap.put(id, student);
-        return "Student with given id: " + id + " has been updated succesfully";
+    public List<Student> getAllStudent(){
+
+        return new ArrayList<>(studentHashMap.values());
     }
 
-    public String deleteStudent(Long id){
-        if (!studentHashMap.containsKey(id)){
-            return "Student with given id: " + id + " does not exist in the db";
+    public String updateStudent(String email, Student student){
+        if (!isStudentExistInDb(email)){
+            return "Student with given id: " + email + " does not exist in the db";
         }
-        studentHashMap.remove(id);
-        return "Student with given id: " + id + " has been removed succesfully";
+        studentHashMap.put(email, student);
+        return "Student with given id: " + email + " has been updated succesfully";
+    }
+
+    public String deleteStudent(String email){
+        if (!isStudentExistInDb(email)){
+            return "Student with given id: " + email + " does not exist in the db";
+        }
+        studentHashMap.remove(email);
+        return "Student with given id: " + email + " has been removed succesfully";
     }
 }
