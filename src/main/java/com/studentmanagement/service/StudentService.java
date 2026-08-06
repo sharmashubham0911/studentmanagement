@@ -8,21 +8,32 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.atomic.AtomicLong;
 
 @Service
 public class StudentService {
 
-    private static long counter = 0;
+    private static final AtomicLong counter = new AtomicLong(0);
     ConcurrentHashMap<Long, Student> studentHashMap = new ConcurrentHashMap<>();
-    Set<String> studentEmails = ConcurrentHashMap.newKeySet();
 
     private Long generateId(){
-        return counter ++;
+        return counter.getAndIncrement();
     }
 
     private boolean isStudentExistInDb(String email){
 
-        if (studentEmails.contains(email)){
+        for (Student student: studentHashMap.values()){
+            if (student.getEmail().equals(email)){
+                return true;
+            }
+        }
+        return false;
+    }
+
+    private boolean isStudentExistInDbForId(String email, Long id){
+
+        Student student = studentHashMap.get(id);
+        if (student.getEmail().equals(email)){
             return true;
         }
         return false;
@@ -43,7 +54,6 @@ public class StudentService {
         Long id = generateId();
         student.setId(id);
         studentHashMap.put(id, student);
-        studentEmails.add(student.getEmail());
         return true;
     }
 
@@ -60,7 +70,10 @@ public class StudentService {
     }
 
     public boolean updateStudent(Long id, Student student){
-        if (!isStudentExistInDb(id) || isStudentExistInDb(student.getEmail())){
+        if (!isStudentExistInDb(id)){
+            return false;
+        }
+        if (isStudentExistInDb(student.getEmail()) && !isStudentExistInDbForId(student.getEmail(), id)){
             return false;
         }
         student.setId(id);
@@ -72,7 +85,6 @@ public class StudentService {
         if (!isStudentExistInDb(id)){
             return false;
         }
-        studentEmails.remove(studentHashMap.get(id).getEmail());
         studentHashMap.remove(id);
         return true;
     }
