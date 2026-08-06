@@ -1,37 +1,57 @@
 package com.studentmanagement.service;
 
 import com.studentmanagement.model.Student;
+import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
 
+@Service
 public class StudentService {
 
     private static long counter = 0;
-    HashMap<String, Student> studentHashMap = new HashMap<>();
+    ConcurrentHashMap<Long, Student> studentHashMap = new ConcurrentHashMap<>();
+    Set<String> studentEmails = ConcurrentHashMap.newKeySet();
+
+    private Long generateId(){
+        return counter ++;
+    }
 
     private boolean isStudentExistInDb(String email){
 
-        if (studentHashMap.containsKey(email)){
+        if (studentEmails.contains(email)){
             return true;
         }
         return false;
     }
 
-    public String createStudent(Student student){
-        if (isStudentExistInDb(student.getEmail())){
-            return "Duplicate Student";
+    private boolean isStudentExistInDb(Long id){
+
+        if (studentHashMap.containsKey(id)){
+            return true;
         }
-        studentHashMap.put(student.getEmail(), student);
-        return "Student created succesfully";
+        return false;
     }
 
-    public Student getStudent(String email){
-        if (!isStudentExistInDb(email)){
-            return new Student();
+    public boolean createStudent(Student student){
+        if (isStudentExistInDb(student.getEmail())){
+            return false;
         }
-        return studentHashMap.get(email);
+        Long id = generateId();
+        student.setId(id);
+        studentHashMap.put(id, student);
+        studentEmails.add(student.getEmail());
+        return true;
+    }
+
+    public Student getStudent(Long id){
+        if (!isStudentExistInDb(id)){
+            return null;
+        }
+        return studentHashMap.get(id);
     }
 
     public List<Student> getAllStudent(){
@@ -39,19 +59,21 @@ public class StudentService {
         return new ArrayList<>(studentHashMap.values());
     }
 
-    public String updateStudent(String email, Student student){
-        if (!isStudentExistInDb(email)){
-            return "Student with given id: " + email + " does not exist in the db";
+    public boolean updateStudent(Long id, Student student){
+        if (!isStudentExistInDb(id) || isStudentExistInDb(student.getEmail())){
+            return false;
         }
-        studentHashMap.put(email, student);
-        return "Student with given id: " + email + " has been updated succesfully";
+        student.setId(id);
+        studentHashMap.put(id, student);
+        return true;
     }
 
-    public String deleteStudent(String email){
-        if (!isStudentExistInDb(email)){
-            return "Student with given id: " + email + " does not exist in the db";
+    public boolean deleteStudent(Long id){
+        if (!isStudentExistInDb(id)){
+            return false;
         }
-        studentHashMap.remove(email);
-        return "Student with given id: " + email + " has been removed succesfully";
+        studentEmails.remove(studentHashMap.get(id).getEmail());
+        studentHashMap.remove(id);
+        return true;
     }
 }

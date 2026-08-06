@@ -2,6 +2,7 @@ package com.studentmanagement.controller.student;
 
 import com.studentmanagement.model.Student;
 import com.studentmanagement.service.StudentService;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -9,30 +10,50 @@ import java.util.List;
 @RestController
 public class StudentController {
 
-    StudentService studentService = new StudentService();
+    private final StudentService studentService;
 
-    @RequestMapping(value = "/createStudent", method = RequestMethod.POST)
-    public String createStudent(@RequestBody Student student){
-        return studentService.createStudent(student);
+    public StudentController(StudentService studentService){
+        this.studentService = studentService;
     }
 
-    @RequestMapping(value = "/getStudent/{id}", method = RequestMethod.GET)
-    public Student getStudent(@PathVariable String id){
-        return studentService.getStudent(id);
+    @PostMapping("/students")
+    public ResponseEntity<String> createStudent(@RequestBody Student student){
+        boolean isStudentCreated = studentService.createStudent(student);
+        if (isStudentCreated){
+            return ResponseEntity.ok("Student created successfully");
+        }
+        return ResponseEntity.badRequest().build();
     }
 
-    @RequestMapping(value = "/getAllStudent", method = RequestMethod.GET)
+    @GetMapping("/students/{id}")
+    public ResponseEntity<Student> getStudent(@PathVariable Long id){
+        Student student = studentService.getStudent(id);
+        if (student == null){
+            return ResponseEntity.notFound().build();
+        }
+        return ResponseEntity.ok(student);
+    }
+
+    @GetMapping("/students")
     public List<Student> getAllStudent(){
         return studentService.getAllStudent();
     }
 
-    @RequestMapping(value = "/updatedStudent/{id}", method = RequestMethod.PUT)
-    public String updateStudent(@PathVariable String id, @RequestBody Student student){
-        return studentService.updateStudent(id, student);
+    @PutMapping("/students/{id}")
+    public ResponseEntity<String> updateStudent(@PathVariable Long id, @RequestBody Student student){
+        boolean isStudentUpdated = studentService.updateStudent(id, student);
+        if (isStudentUpdated){
+            return ResponseEntity.ok("Student with given id " + id + " is updated sucesfully");
+        }
+        return ResponseEntity.badRequest().build();
     }
 
-    @RequestMapping(value = "/deleteStudent/{id}", method = RequestMethod.DELETE)
-    public String deleteStudent(@PathVariable String id){
-        return studentService.deleteStudent(id);
+    @DeleteMapping("/students/{id}")
+    public ResponseEntity<String> deleteStudent(@PathVariable Long id){
+        boolean isStudentDeleted = studentService.deleteStudent(id);
+        if (isStudentDeleted){
+           return ResponseEntity.ok("Student with id: " + id + " deleted successfully");
+        }
+        return ResponseEntity.notFound().build();
     }
 }
